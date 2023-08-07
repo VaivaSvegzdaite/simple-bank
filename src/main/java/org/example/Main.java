@@ -1,39 +1,32 @@
 package org.example;
 
+import org.example.db.DatabaseManager;
 import org.example.module.Account;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        //create account
-        Account account = new Account();
-        account.getBalance();
+        DatabaseManager databaseManager = new DatabaseManager();
+        Connection connection = databaseManager.getDbConnection();
 
-        //create second account
-        Account destination = new Account();
-
-        //deposit account
-        account.deposit(new BigDecimal(150));
-
-        //deposit account negative funds
-        account.deposit(new BigDecimal(-50));
-
-        //withdraw insufficient fund
-        account.withdraw(new BigDecimal(200));
-
-        //withdraw successful
-        account.withdraw(new BigDecimal(20));
-
-        //get balance
-        account.getBalance();
-
-        //transfer to destination account and check balance
-        account.transfer(destination, new BigDecimal(50));
-        destination.getBalance();
-        account.getBalance();
+        try {
+            databaseManager.createNewDbTable(connection);
+            for (int i = 0; i < 5; i++) {
+                Account account = new Account();
+                databaseManager.insertDataIntoDb(connection, account);
+                account.deposit(new BigDecimal(100 * (i + 1)));
+                databaseManager.updateDataInDb(connection, account.getNumber(), account.getBalance());
+                account.withdraw(new BigDecimal(10 * (i + 1)));
+                databaseManager.updateDataInDb(connection, account.getNumber(), account.getBalance());
+            }
+            databaseManager.retrieveDataFromDb(connection);
+        } finally {
+            databaseManager.closeDbConnection(connection);
+        }
 
     }
 }
